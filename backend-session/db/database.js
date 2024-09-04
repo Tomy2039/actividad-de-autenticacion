@@ -1,25 +1,17 @@
-export const database = 
-    {
-        user: [
-            {
-                id: 1,
-                username: 'admin',
-                password: 'admin'
-            },
-            {
-                id: 2,
-                username: 'user',
-                password: 'user'
-            },
-            {
-                id: 3,
-                username: 'guest',
-                password: 'guest'
-            },
-            {
-                id: 4,
-                username: 'guest2',
-                password: 'guest2'
-            }
-        ]
+import mysql from 'mysql2/promise';
+
+export const conexion = async () => {
+    try {
+        const conection = await mysql.createConnection({
+            host: 'localhost',
+            user: 'root',
+            password: '',
+            database: 'db_system'
+        })
+        console.log("Conectado a la base de datos");
+        return conection;
+    } catch (error) {
+        console.error("Error a al conectar la base de datos ")
+        process.exit(1);
     }
+}
