@@ -1,11 +1,10 @@
-
 import cors from 'cors';
-import express, { Router } from 'express';
+import express from 'express';
 import session from 'express-session';
 import morgan from 'morgan';
-import path from 'path';
-import { config } from 'dotenv';
+import "dotenv/config.js";
 import { conexion } from './db/database.js';
+import { ruta } from './routes/auth.routes.js';
 
 const app = express();
 
@@ -20,18 +19,17 @@ app.use(cors({
 app.use(express.json());
 app.use(
     session({
-        secret: config.SECRET_KEY,
+        secret: process.env.SECRET_KEY,
         resave: false,
-        saveUninitialized: true
+        saveUninitialized: true,
     })
 );
 
-app.use(Router);
+app.use(ruta);
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}/`));
 
-const __dirname = path.resolve();
 
 // Middlewares 
 /*

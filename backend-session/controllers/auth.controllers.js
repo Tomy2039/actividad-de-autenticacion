@@ -1,26 +1,42 @@
 import { conexion } from '../db/database.js'
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs'
 
 
 //login
 export const login = async (req, res) => {
     const { username, password } = req.body;
-    let conections
+    let conections;
     try {
-        conections = await conexion()
-        const [rows] = await conections.query('SELECT * FROM users WHERE username = ? AND password = ?', [username, password]);
-        if (rows.length > 0) {
-            req.session.userId = user.id;
-            req.session.username = user.username;
-            return res.json({ message: 'Inicio de sesión exitoso', user: { id: user.id, username: user.username } });
-        } else {
-            return res.status(401).json({ message: 'Credenciales incorrectas' });
+        conections = await conexion();
+        const [rows] = await conections.query('SELECT * FROM users WHERE username = ?', [username]);
+
+        // Verifica si se encontró el usuario
+        if (rows.length === 0) {
+            return res.status(401).json({ message: 'Usuario no encontrado' });
         }
+
+        const user = rows[0]; // Asigna el usuario encontrado
+
+        // Verifica si la contraseña es válida
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(401).json({ message: 'Contraseña incorrecta' });
+        }
+
+        // Guarda información del usuario en la sesión
+        req.session.user = { id: user.id, username: user.username };
+        return res.status(200).json({ message: 'Inicio de sesión exitoso' });
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
         return res.status(500).json({ message: 'Error al iniciar sesión' });
+    } finally {
+        if (conections) {
+            conections.end();  // Cierra la conexión a la base de datos
+        }
     }
-}
+};
+
+
 /*app.post('/login', (req, res) => {
     const { username, password } = req.body;
     // Buscar usuario
@@ -99,14 +115,13 @@ export const logout = async (req, res) => {
 
 //session
 export const session = async (req, res) => {
-    if (req.session.userId) {
-        return res.json({ 
-            loggedIn: true, 
-            user: { id: req.session.userId, username: req.session.username } });
+    if (req.session.user) {
+        res.status(200).json({ message: 'Sesion activada', user: req.session.user });
     } else {
-        return res.status(401).json({ loggedIn: false, message: 'No hay sesión activa' });
+        res.status(401).json({ message: 'No hay sesión activa' });
     }
-}
+};
+
 /*app.get('/session', (req, res) => {
     if (req.session.userId) {
         return res.json({ 
