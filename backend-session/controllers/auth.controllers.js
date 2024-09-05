@@ -1,5 +1,5 @@
 import { conexion } from '../db/database.js'
-import session from 'express-session';
+import bcrypt from 'bcrypt';
 
 
 //login
@@ -42,10 +42,25 @@ export const login = async (req, res) => {
 //register
 export const register = async (req, res) => {
     const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Todos los campos son obligatorios' });
+    }
     let conections
     try {
         conections = await conexion()
-        const [rows] = await conections.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, password]);
+        
+        // Verificar si el usuario ya existe
+        const [userExist] = await conections.query('SELECT * FROM users WHERE username = ?', [username]);
+        if (userExist.length > 0) {
+            return res.status(409).json({ message: 'El usuario ya existe' });
+        }
+
+        // Encriptar password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const [rows] = await conections.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword]);
+
         if (rows.affectedRows === 1) {
             return res.json({ message: 'Usuario registrado exitosamente' });
         } else {
