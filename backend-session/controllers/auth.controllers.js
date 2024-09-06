@@ -5,10 +5,13 @@ import bcrypt from 'bcryptjs'
 //login
 export const login = async (req, res) => {
     const { username, password } = req.body;
+    console.log('username:', username, 'password:', password);
+    
     let conections;
     try {
         conections = await conexion();
         const [rows] = await conections.query('SELECT * FROM users WHERE username = ?', [username]);
+        
 
         // Verifica si se encontró el usuario
         if (rows.length === 0) {
